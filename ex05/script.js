@@ -32,12 +32,54 @@ function exibirTarefas(tarefas) {
   ulTarefas.innerHTML = "";
   tarefas.forEach((tarefa) => {
     const li = document.createElement("li");
-    const text = document.createTextNode(
-      `${tarefa.descricao} - ${tarefa.concluida}`
-    );
+    const text = document.createTextNode(`${tarefa.descricao}`);
+    const cbConcluida = criarCheckBoxConcluida(tarefa);
+    const btRemover = criarBotaoRemover(tarefa);
     li.appendChild(text);
+    li.appendChild(cbConcluida);
+    li.appendChild(btRemover);
     ulTarefas.appendChild(li);
   });
+}
+
+function criarCheckBoxConcluida(tarefa) {
+  const cbConcluida = document.createElement("input");
+  cbConcluida.type = "checkbox";
+  cbConcluida.checked = tarefa.concluida;
+  cbConcluida.onchange = async () => {
+    cbConcluida.disabled = true;
+    const response = await fetch(`${tarefaURL}/${tarefa.objectId}`, {
+      method: "PUT",
+      headers: headersJson,
+      body: JSON.stringify({ concluida: cbConcluida.checked }),
+    });
+    if (!response.ok) {
+      cbConcluida.checked = !cbConcluida.checked;
+    } else {
+      handleWindowLoad();
+    }
+    cbConcluida.disabled = false;
+  };
+  return cbConcluida;
+}
+
+function criarBotaoRemover(tarefa) {
+  const btRemover = document.createElement("button");
+  btRemover.innerHTML = "X";
+  btRemover.onclick = async () => {
+    btRemover.disabled = true;
+    const response = await fetch(`${tarefaURL}/${tarefa.objectId}`, {
+      method: "DELETE",
+      headers: headers,
+    });
+    if (!response.ok) {
+      alert("Erro ao remover a tarefa!");
+    } else {
+      handleWindowLoad();
+    }
+    btRemover.disabled = false;
+  };
+  return btRemover;
 }
 
 async function criarTarefa(tarefa) {
@@ -57,8 +99,10 @@ async function criarTarefa(tarefa) {
 }
 
 async function handleWindowLoad() {
+  console.log("handleWindowLoad begin");
   const tarefas = await getListaTarefas();
   exibirTarefas(tarefas ? tarefas : []);
+  console.log("handleWindowLoad end");
 }
 
 async function handleBtAdicionarClick() {
